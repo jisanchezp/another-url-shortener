@@ -1,0 +1,6 @@
+@AnotherUrl.API_HostAddress = http://localhost:5209
+
+GET {{AnotherUrl.API_HostAddress}}/GetHello/
+Accept: application/json
+
+###
