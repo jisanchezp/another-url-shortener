@@ -1,7 +1,15 @@
+using AnotherUrlShortener.API.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddDbContext<AnotherUrlShortenerDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("UrlShortenerDb")
+        ?? throw new InvalidOperationException("Connection string is null."))
+        .UseSnakeCaseNamingConvention();
+});
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
