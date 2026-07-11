@@ -6,7 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AnotherUrlShortenerDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("UrlShortenerDb")
-        ?? throw new InvalidOperationException("Connection string is null."));
+        ?? throw new InvalidOperationException("Connection string is null."))
+        .UseSnakeCaseNamingConvention();
 });
 
 builder.Services.AddOpenApi();
