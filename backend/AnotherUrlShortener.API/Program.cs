@@ -1,5 +1,6 @@
 using AnotherUrlShortener.API.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,17 +11,39 @@ builder.Services.AddDbContext<AnotherUrlShortenerDbContext>(options =>
         .UseSnakeCaseNamingConvention();
 });
 
+builder.Services.AddAuthentication(opt =>
+{
+    opt.DefaultAuthenticateScheme = "JwtBearer";
+    opt.DefaultChallengeScheme = "JwtBearer";
+}).AddJwtBearer("JwtBearer", opt =>
+{
+    opt.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] 
+            ?? throw new InvalidOperationException("JWT Key is null."))
+        )
+    };
+});
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.MapGet("/GetHello", () =>
 {
