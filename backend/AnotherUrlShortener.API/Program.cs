@@ -35,6 +35,8 @@ builder.Services.AddAuthentication(opt =>
     };
 });
 
+builder.Services.AddAuthorization();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
@@ -50,6 +52,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGet("/GetHello", [Authorize] () =>
 {
@@ -67,6 +70,17 @@ app.MapPost("/signup", async (UserSignupDto userSignupDto, IAuthService authServ
     }
     
     var token = authService.GenerateToken(result.Value); 
+    return Results.Ok(new AuthResponseDto(token, result.Value));
+});
+
+app.MapPost("/login", async (UserLoginDto userLoginDto, IAuthService authService, IUserService userService) =>
+{
+    var result = await userService.LoginAsync(userLoginDto);
+    
+    if (!result.IsSuccess || result.Value is null)
+        return Results.Unauthorized();
+
+    var token = authService.GenerateToken(result.Value);
     return Results.Ok(new AuthResponseDto(token, result.Value));
 });
 
