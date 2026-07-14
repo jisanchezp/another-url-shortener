@@ -1,4 +1,5 @@
 using AnotherUrlShortener.API.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -45,7 +46,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
-app.MapGet("/GetHello", () =>
+app.MapGet("/GetHello", [Authorize] () =>
 {
     return "Hello, World!";
 })
