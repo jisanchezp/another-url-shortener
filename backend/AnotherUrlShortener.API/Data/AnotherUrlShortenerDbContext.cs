@@ -23,5 +23,13 @@ public partial class AnotherUrlShortenerDbContext : DbContext
 
         modelBuilder.Entity<Click>()
             .HasIndex(c => c.UrlId);
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
     } 
 }
