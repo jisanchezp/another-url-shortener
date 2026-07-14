@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using AnotherUrlShortener.API.Dtos;
-using AnotherUrlShortener.API.Models;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AnotherUrlShortener.API.Services;
