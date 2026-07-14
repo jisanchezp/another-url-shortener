@@ -57,4 +57,17 @@ app.MapGet("/GetHello", [Authorize] () =>
 })
 .WithName("GetHello");
 
+app.MapPost("/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
+{
+    var result = await userService.CreateAsync(userSignupDto);
+
+    if (result.IsSuccess == false || result.Value == default)
+    {
+        return Results.Conflict(new { message = result.Error });
+    }
+    
+    var token = authService.GenerateToken(result.Value); 
+    return Results.Ok(new AuthResponseDto(token, result.Value));
+});
+
 app.Run();
