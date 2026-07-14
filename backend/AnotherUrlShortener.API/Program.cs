@@ -1,4 +1,6 @@
 using AnotherUrlShortener.API.Data;
+using AnotherUrlShortener.API.Dtos;
+using AnotherUrlShortener.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -32,6 +34,9 @@ builder.Services.AddAuthentication(opt =>
         )
     };
 });
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddOpenApi();
 
