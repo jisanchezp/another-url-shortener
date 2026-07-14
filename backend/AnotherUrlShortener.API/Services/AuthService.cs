@@ -14,7 +14,7 @@ public class AuthService : IAuthService
         _configuration = configuration;
     }
 
-    public string? GenerateToken(UserDto userDto)
+    public string GenerateToken(UserDto userDto)
     {
         var key = new SymmetricSecurityKey(
             System.Text.Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] 

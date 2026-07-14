@@ -4,5 +4,5 @@ namespace AnotherUrlShortener.API.Services;
 
 public interface IAuthService
 {
-    string? GenerateToken(UserDto userDto);
+    string GenerateToken(UserDto userDto);
 }
