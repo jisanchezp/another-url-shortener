@@ -30,4 +30,24 @@ public class UserService : IUserService
             return Result<UserDto>.Failure("Username or email already in use.");
         }
     }
+
+    public async Task<Result<UserDto>> LoginAsync(UserLoginDto userLoginDto)
+    {
+        var user = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
+
+        if (user is null)
+        {
+            return Result<UserDto>.Failure("Invalid username or password");
+        }
+
+        var passwordValid = BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.PasswordHash);
+
+        if (!passwordValid)
+        {
+            return Result<UserDto>.Failure("Invalid username or password");
+        }
+
+        return Result<UserDto>.Success(user.ToUserDto());
+    }
 }
