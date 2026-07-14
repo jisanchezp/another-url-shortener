@@ -1,13 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace AnotherUrlShortener.API.Dtos;
 
-public class UserSignupDto
-{
-    [Required]
-    public string Username { get; set; } = string.Empty;
-    [Required]
-    public string Password { get; set; } = string.Empty;
-    [Required]
-    public string Email { get; set; } = string.Empty;
-}
+public record UserSignupDto(string Username, string Password, string Email);

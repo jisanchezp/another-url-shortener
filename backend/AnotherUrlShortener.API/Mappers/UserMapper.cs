@@ -5,7 +5,7 @@ namespace AnotherUrlShortener.API.Mappers;
 
 public static class UserMapper
 {
-    public static User UserSignupDtoToUser(this UserSignupDto userDto)
+    public static User ToUser(this UserSignupDto userDto)
     {
         return new User
         {
@@ -13,5 +13,10 @@ public static class UserMapper
             Email = userDto.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password)
         };
+    }
+
+    public static UserDto ToUserDto(this User user)
+    {
+        return new UserDto(user.Id, user.Username, user.Email);
     }
 }
