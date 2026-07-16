@@ -1,3 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace AnotherUrlShortener.API.Dtos;
 
-public record UrlCreateDto(string OriginalUrl, DateTime? ExpiresAt = null);
+public record UrlCreateDto(
+    [property: Required, Url] string OriginalUrl,
+    DateTime? ExpiresAt = null
+);
