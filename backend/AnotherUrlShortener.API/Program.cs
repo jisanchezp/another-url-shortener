@@ -113,6 +113,12 @@ app.MapPost("/api/login", async (UserLoginDto userLoginDto, IAuthService authSer
 
 app.MapPost("/api/url", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user, IUrlService urlService) =>
 {
+    if (!ValidationHelper.TryValidate(urlCreateDto, out var errors))
+    {
+        return Results.BadRequest(errors);
+    }
+
+
     var userId = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
     if (userId is null || !Guid.TryParse(userId, out var parsedUserId))
