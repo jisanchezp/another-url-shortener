@@ -70,13 +70,6 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.MapGet("/api/GetHello", () =>
-{
-    return "Hello, World!";
-})
-.WithName("GetHello")
-.RequireAuthorization();
-
 app.MapPost("/api/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
 {
     if (!ValidationHelper.TryValidate(userSignupDto, out var errors))
