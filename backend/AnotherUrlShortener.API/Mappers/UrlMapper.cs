@@ -7,7 +7,7 @@ public static class UrlMapper
 {
     public static UrlDto ToUrlDto(this Url url, string baseUrl)
     {
-        return new UrlDto(url.Slug, url.OriginalUrl,
+        return new UrlDto(url.Id, url.Slug, url.OriginalUrl,
             $"{baseUrl}/${url.Slug}", url.CreatedAt,
             (DateTime) url.ExpiresAt!);
     }
