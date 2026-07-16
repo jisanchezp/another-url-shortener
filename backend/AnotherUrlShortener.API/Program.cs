@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using AnotherUrlShortener.API.Data;
 using AnotherUrlShortener.API.Dtos;
 using AnotherUrlShortener.API.Services;
@@ -20,6 +22,7 @@ builder.Services.AddAuthentication(opt =>
     opt.DefaultChallengeScheme = "JwtBearer";
 }).AddJwtBearer("JwtBearer", opt =>
 {
+    opt.MapInboundClaims = false;
     opt.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -39,6 +42,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUrlService, UrlService>();
 
 builder.Services.AddOpenApi();
 
@@ -54,13 +58,14 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/GetHello", [Authorize] () =>
+app.MapGet("/api/GetHello", () =>
 {
     return "Hello, World!";
 })
-.WithName("GetHello");
+.WithName("GetHello")
+.RequireAuthorization();
 
-app.MapPost("/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
+app.MapPost("/api/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
 {
     var result = await userService.CreateAsync(userSignupDto);
 
@@ -73,7 +78,7 @@ app.MapPost("/signup", async (UserSignupDto userSignupDto, IAuthService authServ
     return Results.Ok(new AuthResponseDto(token, result.Value));
 });
 
-app.MapPost("/login", async (UserLoginDto userLoginDto, IAuthService authService, IUserService userService) =>
+app.MapPost("/api/login", async (UserLoginDto userLoginDto, IAuthService authService, IUserService userService) =>
 {
     var result = await userService.LoginAsync(userLoginDto);
     
@@ -83,5 +88,24 @@ app.MapPost("/login", async (UserLoginDto userLoginDto, IAuthService authService
     var token = authService.GenerateToken(result.Value);
     return Results.Ok(new AuthResponseDto(token, result.Value));
 });
+
+app.MapPost("/api/url", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user, IUrlService urlService) =>
+{
+    var userId = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+    if (userId is null || !Guid.TryParse(userId, out var parsedUserId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var result = await urlService.CreateAsync(parsedUserId, urlCreateDto);
+
+    if (!result.IsSuccess || result.Value is null)
+    {
+        return Results.InternalServerError(result.Error);
+    }
+
+    return Results.Created($"/api/url/{result.Value.Id}", result.Value);
+}).RequireAuthorization();
 
 app.Run();
