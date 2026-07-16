@@ -39,7 +39,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUrlService, Urlservice>();
+builder.Services.AddScoped<IUrlService, UrlService>();
 
 builder.Services.AddOpenApi();
 
@@ -84,7 +84,5 @@ app.MapPost("/login", async (UserLoginDto userLoginDto, IAuthService authService
     var token = authService.GenerateToken(result.Value);
     return Results.Ok(new AuthResponseDto(token, result.Value));
 });
-
-
 
 app.Run();

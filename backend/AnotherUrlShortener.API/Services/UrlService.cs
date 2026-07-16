@@ -8,12 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AnotherUrlShortener.API.Services;
 
-public class Urlservice : IUrlService
+public class UrlService : IUrlService
 {
     private readonly AnotherUrlShortenerDbContext _dbContext;
     private IConfiguration _configuration;
 
-    public Urlservice(AnotherUrlShortenerDbContext dbContext, IConfiguration configuration)
+    public UrlService(AnotherUrlShortenerDbContext dbContext, IConfiguration configuration)
     {
         _dbContext = dbContext;        
         _configuration = configuration;
