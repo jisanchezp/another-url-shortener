@@ -1,9 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using AnotherUrlShortener.API.Common;
 using AnotherUrlShortener.API.Data;
 using AnotherUrlShortener.API.Dtos;
 using AnotherUrlShortener.API.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -77,6 +79,14 @@ app.MapGet("/api/GetHello", () =>
 
 app.MapPost("/api/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
 {
+    var isValid = ValidationHelper.TryValidate(userSignupDto, out var errors1);
+    Console.WriteLine($"Valid: {isValid}, Errors: {string.Join(",", errors1)}");
+
+    if (!ValidationHelper.TryValidate(userSignupDto, out var errors))
+    {
+        return Results.BadRequest(errors);
+    }
+
     var result = await userService.CreateAsync(userSignupDto);
 
     if (result.IsSuccess == false || result.Value == default)
