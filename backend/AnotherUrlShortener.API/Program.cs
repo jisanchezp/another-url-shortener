@@ -79,9 +79,6 @@ app.MapGet("/api/GetHello", () =>
 
 app.MapPost("/api/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
 {
-    var isValid = ValidationHelper.TryValidate(userSignupDto, out var errors1);
-    Console.WriteLine($"Valid: {isValid}, Errors: {string.Join(",", errors1)}");
-
     if (!ValidationHelper.TryValidate(userSignupDto, out var errors))
     {
         return Results.BadRequest(errors);
@@ -100,6 +97,11 @@ app.MapPost("/api/signup", async (UserSignupDto userSignupDto, IAuthService auth
 
 app.MapPost("/api/login", async (UserLoginDto userLoginDto, IAuthService authService, IUserService userService) =>
 {
+    if (!ValidationHelper.TryValidate(userLoginDto, out var errors))
+    {
+        return Results.BadRequest(errors);
+    }
+
     var result = await userService.LoginAsync(userLoginDto);
     
     if (!result.IsSuccess || result.Value is null)
