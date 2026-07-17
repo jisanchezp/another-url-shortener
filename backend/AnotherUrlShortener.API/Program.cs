@@ -132,7 +132,8 @@ app.MapPost("/api/url", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user, 
     return Results.Created($"/api/url/{result.Value.Id}", result.Value);
 }).RequireAuthorization();
 
-app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, IUrlService urlService) =>
+app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, 
+    IUrlService urlService, IClickService clickService, HttpContext httpCtx) =>
 {
     var result = await urlService.GetBySlugAsync(slug);
 
@@ -140,6 +141,11 @@ app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, IUrlService 
     {
         return Results.NotFound();
     }
+
+    _ = clickService.LogClickAsync(
+        result.Value.Id,
+        httpCtx.Request.Headers.Referer.ToString(),
+        httpCtx.Connection.RemoteIpAddress?.ToString());
 
     return Results.Redirect(result.Value.OriginalUrl, permanent: true);
 });
