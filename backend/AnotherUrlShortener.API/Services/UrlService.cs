@@ -12,11 +12,14 @@ public class UrlService : IUrlService
 {
     private readonly AnotherUrlShortenerDbContext _dbContext;
     private IConfiguration _configuration;
+    private readonly string _baseUrl;
 
     public UrlService(AnotherUrlShortenerDbContext dbContext, IConfiguration configuration)
     {
         _dbContext = dbContext;        
         _configuration = configuration;
+        _baseUrl = _configuration["App:BaseUrl"]
+            ?? throw new InvalidOperationException("Base Url is null.");
     }
 
     public async Task<Result<UrlDto>> CreateAsync(Guid userId, UrlCreateDto urlCreateDto)
@@ -40,8 +43,7 @@ public class UrlService : IUrlService
             try
             {
                 await _dbContext.SaveChangesAsync();
-                return Result<UrlDto>.Success(url.ToUrlDto(_configuration["App:BaseUrl"]
-                    ?? throw new InvalidOperationException("Base Url is null.")));
+                return Result<UrlDto>.Success(url.ToUrlDto(_baseUrl));
             }
             catch (DbUpdateException ex) when (ex.IsUniqueViolation())
             {
@@ -51,6 +53,18 @@ public class UrlService : IUrlService
         }
         
         return Result<UrlDto>.Failure("Failed to generate an unique slug.");
+    }
+
+    public async Task<Result<UrlDto>> GetBySlugAsync(string slug)
+    {
+        var url = await _dbContext.Urls.FirstOrDefaultAsync(u => u.Slug == slug);
+
+        if (url is null || (url.ExpiresAt.HasValue && url.ExpiresAt < DateTime.UtcNow))
+        {
+            return Result<UrlDto>.Failure("Url not found.");
+        }
+
+        return Result<UrlDto>.Success(url.ToUrlDto(_baseUrl));
     }
 
     private static string GenerateSlug(int length)
@@ -63,5 +77,5 @@ public class UrlService : IUrlService
                 .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
             ]
         );
-    }
+    }    
 }

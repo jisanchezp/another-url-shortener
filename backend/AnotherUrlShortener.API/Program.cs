@@ -129,4 +129,16 @@ app.MapPost("/api/url", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user, 
     return Results.Created($"/api/url/{result.Value.Id}", result.Value);
 }).RequireAuthorization();
 
+app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, IUrlService urlService) =>
+{
+    var result = await urlService.GetBySlugAsync(slug);
+
+    if (!result.IsSuccess || result.Value is null)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Redirect(result.Value.OriginalUrl, permanent: true);
+});
+
 app.Run();
