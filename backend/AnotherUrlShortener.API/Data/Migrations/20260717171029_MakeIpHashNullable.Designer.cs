@@ -3,6 +3,7 @@ using System;
 using AnotherUrlShortener.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AnotherUrlShortener.API.Data.Migrations
 {
     [DbContext(typeof(AnotherUrlShortenerDbContext))]
-    partial class AnotherUrlShortenerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717171029_MakeIpHashNullable")]
+    partial class MakeIpHashNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

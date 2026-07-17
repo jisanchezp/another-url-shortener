@@ -4,8 +4,7 @@ using AnotherUrlShortener.API.Common;
 using AnotherUrlShortener.API.Data;
 using AnotherUrlShortener.API.Dtos;
 using AnotherUrlShortener.API.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
+using AnotherUrlShortener.API.Services.Background;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -45,6 +44,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUrlService, UrlService>();
+builder.Services.AddSingleton<IClickService, ClickService>();
+builder.Services.AddHostedService<ClickWriterService>();
 
 builder.Services.AddOpenApi();
 
@@ -129,7 +130,8 @@ app.MapPost("/api/url", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user, 
     return Results.Created($"/api/url/{result.Value.Id}", result.Value);
 }).RequireAuthorization();
 
-app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, IUrlService urlService) =>
+app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, 
+    IUrlService urlService, IClickService clickService, HttpContext httpCtx) =>
 {
     var result = await urlService.GetBySlugAsync(slug);
 
@@ -137,6 +139,11 @@ app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, IUrlService 
     {
         return Results.NotFound();
     }
+
+    _ = clickService.LogClickAsync(
+        result.Value.Id,
+        httpCtx.Request.Headers.Referer.ToString(),
+        httpCtx.Connection.RemoteIpAddress?.ToString());
 
     return Results.Redirect(result.Value.OriginalUrl, permanent: true);
 });
