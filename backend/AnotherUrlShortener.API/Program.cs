@@ -4,6 +4,7 @@ using AnotherUrlShortener.API.Common;
 using AnotherUrlShortener.API.Data;
 using AnotherUrlShortener.API.Dtos;
 using AnotherUrlShortener.API.Services;
+using AnotherUrlShortener.API.Services.Background;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUrlService, UrlService>();
+builder.Services.AddScoped<IClickService, ClickService>();
+builder.Services.AddHostedService<ClickWriterService>();
 
 builder.Services.AddOpenApi();
 
