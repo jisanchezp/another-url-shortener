@@ -13,6 +13,8 @@ public class ClickService : IClickService
         return _channel.Writer.WriteAsync(new ClickEvent(urlId, referrer, HashIp(ip), DateTime.UtcNow));
     }
 
+    public ChannelReader<ClickEvent> Reader => _channel.Reader;
+
     public record ClickEvent(Guid UrlId, string? Referrer, string? IpHash, DateTime OccurredAt);
 
     private static string? HashIp(string? ip)
