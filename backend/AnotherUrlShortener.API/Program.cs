@@ -1,10 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Threading.RateLimiting;
 using AnotherUrlShortener.API.Common;
 using AnotherUrlShortener.API.Data;
 using AnotherUrlShortener.API.Dtos;
 using AnotherUrlShortener.API.Services;
 using AnotherUrlShortener.API.Services.Background;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -41,6 +43,22 @@ builder.Services.AddAuthentication(opt =>
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddRateLimiter(options => 
+    options.AddFixedWindowLimiter(policyName: "fixed", limiterOptions =>
+        {
+            limiterOptions.PermitLimit = 20;
+            limiterOptions.Window = TimeSpan.FromMinutes(60);
+            limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+            limiterOptions.QueueLimit = 0;
+
+        })
+        .OnRejected = async (context, token) => {
+            context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            await context.HttpContext.Response.WriteAsJsonAsync(
+                new { message = "Rate limit exceeded. Try again later." }, cancellationToken: token
+            );
+        });
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IUrlService, UrlService>();
@@ -66,9 +84,8 @@ app.UseExceptionHandler(errApp =>
 });
 
 app.UseHttpsRedirection();
-
+app.UseRateLimiter();
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapPost("/api/auth/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
@@ -128,7 +145,8 @@ app.MapPost("/api/urls", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user,
     }
 
     return Results.Created($"/api/url/{result.Value.Id}", result.Value);
-}).RequireAuthorization();
+}).RequireAuthorization()
+  .RequireRateLimiting("fixed");
 
 app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, 
     IUrlService urlService, IClickService clickService, HttpContext httpCtx) =>
