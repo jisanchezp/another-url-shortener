@@ -71,7 +71,7 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.MapPost("/api/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
+app.MapPost("/api/auth/signup", async (UserSignupDto userSignupDto, IAuthService authService, IUserService userService) =>
 {
     if (!ValidationHelper.TryValidate(userSignupDto, out var errors))
     {
@@ -89,7 +89,7 @@ app.MapPost("/api/signup", async (UserSignupDto userSignupDto, IAuthService auth
     return Results.Ok(new AuthResponseDto(token, result.Value));
 });
 
-app.MapPost("/api/login", async (UserLoginDto userLoginDto, IAuthService authService, IUserService userService) =>
+app.MapPost("/api/auth/login", async (UserLoginDto userLoginDto, IAuthService authService, IUserService userService) =>
 {
     if (!ValidationHelper.TryValidate(userLoginDto, out var errors))
     {
@@ -105,7 +105,7 @@ app.MapPost("/api/login", async (UserLoginDto userLoginDto, IAuthService authSer
     return Results.Ok(new AuthResponseDto(token, result.Value));
 });
 
-app.MapPost("/api/url", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user, IUrlService urlService) =>
+app.MapPost("/api/urls", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user, IUrlService urlService) =>
 {
     if (!ValidationHelper.TryValidate(urlCreateDto, out var errors))
     {
