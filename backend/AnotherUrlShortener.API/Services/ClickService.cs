@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading.Channels;
 using AnotherUrlShortener.API.Data;
 using AnotherUrlShortener.API.Dtos;
+using AnotherUrlShortener.API.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AnotherUrlShortener.API.Services;
@@ -34,11 +35,40 @@ public class ClickService : IClickService
             .ToListAsync();            
     }
 
+    public async Task<List<ReferrerCountDto>> GetTopReferrersAsync(Guid urlId)
+    {
+        var referrerClicks = await _dbContext.Clicks
+            .Where(c => c.UrlId == urlId && c.Referrer != null)
+            .ToListAsync();
+
+        var topReferrers = referrerClicks.GroupBy(c => NormalizeReferrer(c.Referrer!))
+            .Select(g => new ReferrerCountDto(g.Key, g.Count()))
+            .Take(10)
+            .OrderByDescending(g => g.Count)            
+            .ToList();
+
+        return topReferrers;            
+    }
+
+    public async Task<int> GetTotalClicksAsync(Guid urlId)
+    {
+        return await _dbContext.Clicks
+            .Where(c => c.UrlId == urlId)
+            .CountAsync();
+
+    }
+
     private static string? HashIp(string? ip)
     {
         if (ip is null) return null;
 
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(ip));
         return Convert.ToHexString(bytes);
+    }
+
+    private static string NormalizeReferrer(string referrer)
+    {
+        return Uri.TryCreate(referrer, UriKind.Absolute, out var uri) ?
+            uri.Host : referrer;
     }
 }
