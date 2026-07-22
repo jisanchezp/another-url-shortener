@@ -24,7 +24,17 @@ public class ClickService : IClickService
         return _channel.Writer.WriteAsync(new ClickEvent(urlId, referrer, HashIp(ip), DateTime.UtcNow));
     }
 
-    public async Task<List<DailyCountDto>> GetClicksByDayAsync(Guid urlId)
+    public async Task<UrlStatsDto> GetClickStats(Guid urlId)
+    {
+        var clicksByDay = await GetClicksByDayAsync(urlId);
+        var topReferrers = await GetTopReferrersAsync(urlId);
+        var totalClicks = await GetTotalClicksAsync(urlId);
+        var uniqueVisitorsCount = await GetUniqueVisitorsCountAsync(urlId);
+
+        return new UrlStatsDto(clicksByDay, topReferrers, totalClicks, uniqueVisitorsCount);
+    }
+
+    private async Task<List<DailyCountDto>> GetClicksByDayAsync(Guid urlId)
     {
         return await _dbContext.Clicks
             .Where(c => c.UrlId == urlId)
@@ -34,7 +44,7 @@ public class ClickService : IClickService
             .ToListAsync();            
     }
 
-    public async Task<List<ReferrerCountDto>> GetTopReferrersAsync(Guid urlId)
+    private async Task<List<ReferrerCountDto>> GetTopReferrersAsync(Guid urlId)
     {
         var referrerClicks = await _dbContext.Clicks
             .Where(c => c.UrlId == urlId && c.Referrer != null)
@@ -49,14 +59,14 @@ public class ClickService : IClickService
         return topReferrers;            
     }
 
-    public async Task<int> GetTotalClicksAsync(Guid urlId)
+    private async Task<int> GetTotalClicksAsync(Guid urlId)
     {
         return await _dbContext.Clicks
             .Where(c => c.UrlId == urlId)
             .CountAsync();
     }
 
-    public async Task<int> GetUniqueVisitorsCountAsync(Guid urlId)
+    private async Task<int> GetUniqueVisitorsCountAsync(Guid urlId)
     {
         return await _dbContext.Clicks
             .Where(c => c.UrlId == urlId && c.IpHash != null)
