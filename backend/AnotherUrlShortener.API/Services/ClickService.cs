@@ -9,14 +9,14 @@ namespace AnotherUrlShortener.API.Services;
 
 public class ClickService : IClickService
 {
-    private readonly Channel<ClickEvent> _channel = Channel.CreateUnbounded<ClickEvent>();
-    private readonly AnotherUrlShortenerDbContext _dbContext;
+    private readonly Channel<ClickEvent> _channel = Channel.CreateUnbounded<ClickEvent>();    
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     public ChannelReader<ClickEvent> Reader => _channel.Reader;
     public record ClickEvent(Guid UrlId, string? Referrer, string? IpHash, DateTime OccurredAt);
 
-    public ClickService(AnotherUrlShortenerDbContext dbContext)
+    public ClickService(IServiceScopeFactory serviceScopeFactory)
     {
-        _dbContext = dbContext;
+        _serviceScopeFactory = serviceScopeFactory;
     }
 
     public ValueTask LogClickAsync(Guid urlId, string? referrer, string? ip)
@@ -26,27 +26,31 @@ public class ClickService : IClickService
 
     public async Task<UrlStatsDto> GetClickStats(Guid urlId)
     {
-        var clicksByDay = await GetClicksByDayAsync(urlId);
-        var topReferrers = await GetTopReferrersAsync(urlId);
-        var totalClicks = await GetTotalClicksAsync(urlId);
-        var uniqueVisitorsCount = await GetUniqueVisitorsCountAsync(urlId);
+        using var serviceScope = _serviceScopeFactory.CreateScope();
+        var dbContext = serviceScope.ServiceProvider.GetRequiredService<AnotherUrlShortenerDbContext>();
+
+        var clicksByDay = await GetClicksByDayAsync(dbContext, urlId);
+        var topReferrers = await GetTopReferrersAsync(dbContext, urlId);
+        var totalClicks = await GetTotalClicksAsync(dbContext, urlId);
+        var uniqueVisitorsCount = await GetUniqueVisitorsCountAsync(dbContext, urlId);
 
         return new UrlStatsDto(clicksByDay, topReferrers, totalClicks, uniqueVisitorsCount);
     }
 
-    private async Task<List<DailyCountDto>> GetClicksByDayAsync(Guid urlId)
+    private async Task<List<DailyCountDto>> GetClicksByDayAsync(AnotherUrlShortenerDbContext dbContext, Guid urlId)
     {
-        return await _dbContext.Clicks
+        var clickGroups = await dbContext.Clicks
             .Where(c => c.UrlId == urlId)
-            .GroupBy(c => c.ClickedAt.Date)
+            .GroupBy(c => c.ClickedAt).ToListAsync();
+            
+        return clickGroups
             .Select(g => new DailyCountDto(DateOnly.FromDateTime(g.Key), g.Count()))
-            .OrderBy(g => g.Date)
-            .ToListAsync();            
+            .OrderBy(g => g.Date).ToList(); 
     }
 
-    private async Task<List<ReferrerCountDto>> GetTopReferrersAsync(Guid urlId)
+    private async Task<List<ReferrerCountDto>> GetTopReferrersAsync(AnotherUrlShortenerDbContext dbContext, Guid urlId)
     {
-        var referrerClicks = await _dbContext.Clicks
+        var referrerClicks = await dbContext.Clicks
             .Where(c => c.UrlId == urlId && c.Referrer != null)
             .ToListAsync();
 
@@ -59,16 +63,16 @@ public class ClickService : IClickService
         return topReferrers;            
     }
 
-    private async Task<int> GetTotalClicksAsync(Guid urlId)
+    private async Task<int> GetTotalClicksAsync(AnotherUrlShortenerDbContext dbContext, Guid urlId)
     {
-        return await _dbContext.Clicks
+        return await dbContext.Clicks
             .Where(c => c.UrlId == urlId)
             .CountAsync();
     }
 
-    private async Task<int> GetUniqueVisitorsCountAsync(Guid urlId)
+    private async Task<int> GetUniqueVisitorsCountAsync(AnotherUrlShortenerDbContext dbContext, Guid urlId)
     {
-        return await _dbContext.Clicks
+        return await dbContext.Clicks
             .Where(c => c.UrlId == urlId && c.IpHash != null)
             .Select(c => c.IpHash)
             .Distinct()
