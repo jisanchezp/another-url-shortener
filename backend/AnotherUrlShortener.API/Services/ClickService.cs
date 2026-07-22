@@ -39,13 +39,15 @@ public class ClickService : IClickService
 
     private async Task<List<DailyCountDto>> GetClicksByDayAsync(AnotherUrlShortenerDbContext dbContext, Guid urlId)
     {
-        var clickGroups = await dbContext.Clicks
+        var clicks = await dbContext.Clicks
             .Where(c => c.UrlId == urlId)
-            .GroupBy(c => c.ClickedAt).ToListAsync();
-            
-        return clickGroups
+            .ToListAsync();
+
+        return clicks 
+            .GroupBy(c => c.ClickedAt.Date)
             .Select(g => new DailyCountDto(DateOnly.FromDateTime(g.Key), g.Count()))
-            .OrderBy(g => g.Date).ToList(); 
+            .OrderBy(g => g.Date)
+            .ToList();
     }
 
     private async Task<List<ReferrerCountDto>> GetTopReferrersAsync(AnotherUrlShortenerDbContext dbContext, Guid urlId)
