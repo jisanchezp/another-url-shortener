@@ -148,6 +148,22 @@ app.MapPost("/api/urls", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user,
 }).RequireAuthorization()
   .RequireRateLimiting("fixed");
 
+app.MapGet("/api/urls/{id:guid}/stats", async (Guid id, ClaimsPrincipal user, IUrlService urlService, IClickService clickService) =>
+{
+    var userId = user.GetUserId();
+
+    if (userId is null) return Results.Unauthorized();
+
+    var isOwned = await urlService.IsOwnedByUserAsync(id, (Guid) userId);
+
+    if (!isOwned) return Results.NotFound("Url not found.");
+
+    var stats = await clickService.GetClickStats(id);
+
+    return Results.Ok(stats);
+
+}).RequireAuthorization();
+
 app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, 
     IUrlService urlService, IClickService clickService, HttpContext httpCtx) =>
 {
