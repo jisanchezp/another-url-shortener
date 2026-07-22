@@ -3,7 +3,6 @@ using System.Text;
 using System.Threading.Channels;
 using AnotherUrlShortener.API.Data;
 using AnotherUrlShortener.API.Dtos;
-using AnotherUrlShortener.API.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AnotherUrlShortener.API.Services;
@@ -55,7 +54,15 @@ public class ClickService : IClickService
         return await _dbContext.Clicks
             .Where(c => c.UrlId == urlId)
             .CountAsync();
+    }
 
+    public async Task<int> GetUniqueVisitorsCountAsync(Guid urlId)
+    {
+        return await _dbContext.Clicks
+            .Where(c => c.UrlId == urlId && c.IpHash != null)
+            .Select(c => c.IpHash)
+            .Distinct()
+            .CountAsync();
     }
 
     private static string? HashIp(string? ip)

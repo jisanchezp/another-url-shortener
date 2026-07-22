@@ -8,4 +8,5 @@ public interface IClickService
     Task<List<DailyCountDto>> GetClicksByDayAsync(Guid urlId);
     Task<List<ReferrerCountDto>> GetTopReferrersAsync(Guid urlId);
     Task<int> GetTotalClicksAsync(Guid urlId);
+    Task<int> GetUniqueVisitorsCountAsync(Guid urlId);
 }
