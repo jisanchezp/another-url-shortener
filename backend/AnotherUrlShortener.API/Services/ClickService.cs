@@ -24,14 +24,15 @@ public class ClickService : IClickService
         return _channel.Writer.WriteAsync(new ClickEvent(urlId, referrer, HashIp(ip), DateTime.UtcNow));
     }
 
-    public async Task<UrlStatsDto> GetClickStats(Guid urlId)
+    public async Task<Result<UrlStatsDto>> GetClickStats(Guid urlId)
     {
         var clicksByDay = await GetClicksByDayAsync(urlId);
         var topReferrers = await GetTopReferrersAsync(urlId);
         var totalClicks = await GetTotalClicksAsync(urlId);
         var uniqueVisitorsCount = await GetUniqueVisitorsCountAsync(urlId);
 
-        return new UrlStatsDto(clicksByDay, topReferrers, totalClicks, uniqueVisitorsCount);
+        var stats = new UrlStatsDto(clicksByDay, topReferrers, totalClicks, uniqueVisitorsCount);
+        return Result<UrlStatsDto>.Success(stats);
     }
 
     private async Task<List<DailyCountDto>> GetClicksByDayAsync(Guid urlId)
