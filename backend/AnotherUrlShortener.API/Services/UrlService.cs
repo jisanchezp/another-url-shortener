@@ -66,6 +66,11 @@ public class UrlService : IUrlService
 
         return Result<UrlDto>.Success(url.ToUrlDto(_baseUrl));
     }
+    
+    public async Task<bool> IsOwnedByUserAsync(Guid urlId, Guid userId)
+    {
+        return await _dbContext.Urls.AnyAsync(u => u.Id == urlId && u.UserId == userId);
+    }
 
     private static string GenerateSlug(int length)
     {
@@ -77,5 +82,5 @@ public class UrlService : IUrlService
                 .Select(_ => chars[RandomNumberGenerator.GetInt32(chars.Length)])
             ]
         );
-    }    
+    }
 }
