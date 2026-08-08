@@ -4,6 +4,7 @@ using System.Threading.RateLimiting;
 using AnotherUrlShortener.API.Common;
 using AnotherUrlShortener.API.Data;
 using AnotherUrlShortener.API.Dtos;
+using AnotherUrlShortener.API.Extensions;
 using AnotherUrlShortener.API.Services;
 using AnotherUrlShortener.API.Services.Background;
 using Microsoft.AspNetCore.RateLimiting;
@@ -129,15 +130,14 @@ app.MapPost("/api/urls", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user,
         return Results.BadRequest(errors);
     }
 
+    var userId = user.GetUserId();
 
-    var userId = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-
-    if (userId is null || !Guid.TryParse(userId, out var parsedUserId))
+    if (userId is null)
     {
         return Results.Unauthorized();
     }
 
-    var result = await urlService.CreateAsync(parsedUserId, urlCreateDto);
+    var result = await urlService.CreateAsync((Guid) userId, urlCreateDto);
 
     if (!result.IsSuccess || result.Value is null)
     {
@@ -147,6 +147,22 @@ app.MapPost("/api/urls", async (UrlCreateDto urlCreateDto, ClaimsPrincipal user,
     return Results.Created($"/api/url/{result.Value.Id}", result.Value);
 }).RequireAuthorization()
   .RequireRateLimiting("fixed");
+
+app.MapGet("/api/urls/{id:guid}/stats", async (Guid id, ClaimsPrincipal user, IUrlService urlService, IClickService clickService) =>
+{
+    var userId = user.GetUserId();
+
+    if (userId is null) return Results.Unauthorized();
+
+    var isOwned = await urlService.IsOwnedByUserAsync(id, (Guid) userId);
+
+    if (!isOwned) return Results.NotFound("Url not found.");
+
+    var stats = await clickService.GetClickStats(id);
+
+    return Results.Ok(stats);
+
+}).RequireAuthorization();
 
 app.MapGet("/{slug:regex(^[a-zA-Z0-9]{{6}}$)}", async (string slug, 
     IUrlService urlService, IClickService clickService, HttpContext httpCtx) =>
