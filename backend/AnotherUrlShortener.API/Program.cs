@@ -66,6 +66,18 @@ builder.Services.AddScoped<IUrlService, UrlService>();
 builder.Services.AddSingleton<IClickService, ClickService>();
 builder.Services.AddHostedService<ClickWriterService>();
 
+builder.Services.AddCors(options => {
+    options.AddPolicy(
+        name: "LocalDevelopment",
+        builder =>
+        {
+            builder
+                .WithOrigins("http://localhost:4200")
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        });
+});
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -84,6 +96,7 @@ app.UseExceptionHandler(errApp =>
     });
 });
 
+app.UseCors("LocalDevelopment");
 app.UseHttpsRedirection();
 app.UseRateLimiter();
 app.UseAuthentication();
